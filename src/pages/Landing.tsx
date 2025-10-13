@@ -50,14 +50,14 @@ export default function Landing() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-center"
         >
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-foreground">
             Book Your Bus Ticket
             <br />
             <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
               In Seconds
             </span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-foreground/80 mb-8 max-w-3xl mx-auto font-medium">
             Experience seamless bus booking with real-time seat availability, instant payments, and digital tickets.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -104,10 +104,10 @@ export default function Landing() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">
             Why Choose Us?
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-xl text-foreground/70 font-medium">
             Modern features for a seamless booking experience
           </p>
         </motion.div>
@@ -161,8 +161,8 @@ export default function Landing() {
               className="glass rounded-2xl p-8 hover:glass-strong transition-all"
             >
               <feature.icon className={`h-12 w-12 ${feature.color} mb-4`} />
-              <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
+              <h3 className="text-xl font-bold mb-2 text-foreground">{feature.title}</h3>
+              <p className="text-foreground/70">{feature.description}</p>
             </motion.div>
           ))}
         </div>
@@ -177,10 +177,10 @@ export default function Landing() {
           viewport={{ once: true }}
           className="glass-strong rounded-3xl p-12 text-center"
         >
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">
             Ready to Get Started?
           </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-foreground/75 mb-8 max-w-2xl mx-auto font-medium">
             Join thousands of commuters who trust BMTC Booking for their daily travel needs.
           </p>
           <Button
@@ -202,7 +202,7 @@ export default function Landing() {
               <img src="./logo.svg" alt="BMTC Logo" className="h-8 w-8" />
               <span className="font-bold">BMTC Booking System</span>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground/60">
               © 2024 BMTC. All rights reserved. Built with{" "}
               <a
                 href="https://vly.ai"
