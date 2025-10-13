@@ -1,12 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bus, DollarSign, MapPin, Ticket, Users } from "lucide-react";
+import { ArrowLeft, Bus, DollarSign, MapPin, Ticket, Plus } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
@@ -15,6 +21,35 @@ export default function AdminDashboard() {
   const routes = useQuery(api.routes.getAllRoutes);
   const buses = useQuery(api.buses.getAllBuses);
   const bookings = useQuery(api.bookings.getAllBookings);
+  const staff = useQuery(api.staff.getAllStaff);
+  
+  const addRoute = useMutation(api.routes.addRoute);
+  const addBus = useMutation(api.buses.addBus);
+
+  const [openRouteDialog, setOpenRouteDialog] = useState(false);
+  const [openBusDialog, setOpenBusDialog] = useState(false);
+
+  // Route form state
+  const [routeForm, setRouteForm] = useState({
+    routeName: "",
+    source: "",
+    destination: "",
+    distance: "",
+    estimatedTime: "",
+    fare: "",
+    stops: "",
+  });
+
+  // Bus form state
+  const [busForm, setBusForm] = useState({
+    busNumber: "",
+    routeId: "",
+    capacity: "",
+    totalSeats: "",
+    busType: "",
+    driverId: "",
+    conductorId: "",
+  });
 
   if (isLoading || !user) {
     navigate("/auth");
@@ -25,6 +60,64 @@ export default function AdminDashboard() {
     navigate("/dashboard");
     return null;
   }
+
+  const handleAddRoute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await addRoute({
+        routeName: routeForm.routeName,
+        source: routeForm.source,
+        destination: routeForm.destination,
+        distance: parseFloat(routeForm.distance),
+        estimatedTime: parseFloat(routeForm.estimatedTime),
+        fare: parseFloat(routeForm.fare),
+        stops: routeForm.stops.split(",").map(s => s.trim()),
+      });
+      toast.success("Route added successfully!");
+      setOpenRouteDialog(false);
+      setRouteForm({
+        routeName: "",
+        source: "",
+        destination: "",
+        distance: "",
+        estimatedTime: "",
+        fare: "",
+        stops: "",
+      });
+    } catch (error) {
+      toast.error("Failed to add route");
+      console.error(error);
+    }
+  };
+
+  const handleAddBus = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await addBus({
+        busNumber: busForm.busNumber,
+        routeId: busForm.routeId as any,
+        capacity: parseFloat(busForm.capacity),
+        totalSeats: parseFloat(busForm.totalSeats),
+        busType: busForm.busType,
+        driverId: busForm.driverId ? (busForm.driverId as any) : undefined,
+        conductorId: busForm.conductorId ? (busForm.conductorId as any) : undefined,
+      });
+      toast.success("Bus added successfully!");
+      setOpenBusDialog(false);
+      setBusForm({
+        busNumber: "",
+        routeId: "",
+        capacity: "",
+        totalSeats: "",
+        busType: "",
+        driverId: "",
+        conductorId: "",
+      });
+    } catch (error) {
+      toast.error("Failed to add bus");
+      console.error(error);
+    }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -108,8 +201,117 @@ export default function AdminDashboard() {
             <TabsContent value="routes">
               <Card className="glass-strong border">
                 <CardHeader>
-                  <CardTitle>All Routes</CardTitle>
-                  <CardDescription>Manage bus routes and schedules</CardDescription>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>All Routes</CardTitle>
+                      <CardDescription>Manage bus routes and schedules</CardDescription>
+                    </div>
+                    <Dialog open={openRouteDialog} onOpenChange={setOpenRouteDialog}>
+                      <DialogTrigger asChild>
+                        <Button className="glass-strong">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Route
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="glass-strong border max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Add New Route</DialogTitle>
+                          <DialogDescription>Create a new bus route in the system</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleAddRoute} className="space-y-4">
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="routeName">Route Name</Label>
+                              <Input
+                                id="routeName"
+                                value={routeForm.routeName}
+                                onChange={(e) => setRouteForm({ ...routeForm, routeName: e.target.value })}
+                                placeholder="e.g., KR Market to Whitefield"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="fare">Fare (₹)</Label>
+                              <Input
+                                id="fare"
+                                type="number"
+                                value={routeForm.fare}
+                                onChange={(e) => setRouteForm({ ...routeForm, fare: e.target.value })}
+                                placeholder="50"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="source">Source</Label>
+                              <Input
+                                id="source"
+                                value={routeForm.source}
+                                onChange={(e) => setRouteForm({ ...routeForm, source: e.target.value })}
+                                placeholder="KR Market"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="destination">Destination</Label>
+                              <Input
+                                id="destination"
+                                value={routeForm.destination}
+                                onChange={(e) => setRouteForm({ ...routeForm, destination: e.target.value })}
+                                placeholder="Whitefield"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="distance">Distance (km)</Label>
+                              <Input
+                                id="distance"
+                                type="number"
+                                value={routeForm.distance}
+                                onChange={(e) => setRouteForm({ ...routeForm, distance: e.target.value })}
+                                placeholder="25"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="estimatedTime">Estimated Time (mins)</Label>
+                              <Input
+                                id="estimatedTime"
+                                type="number"
+                                value={routeForm.estimatedTime}
+                                onChange={(e) => setRouteForm({ ...routeForm, estimatedTime: e.target.value })}
+                                placeholder="60"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="stops">Stops (comma-separated)</Label>
+                            <Input
+                              id="stops"
+                              value={routeForm.stops}
+                              onChange={(e) => setRouteForm({ ...routeForm, stops: e.target.value })}
+                              placeholder="KR Market, Shivaji Nagar, MG Road, Whitefield"
+                              required
+                              className="glass"
+                            />
+                          </div>
+                          <Button type="submit" className="w-full glass-strong">
+                            Add Route
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {routes && routes.length > 0 ? (
@@ -140,8 +342,144 @@ export default function AdminDashboard() {
             <TabsContent value="buses">
               <Card className="glass-strong border">
                 <CardHeader>
-                  <CardTitle>All Buses</CardTitle>
-                  <CardDescription>Manage bus fleet and assignments</CardDescription>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>All Buses</CardTitle>
+                      <CardDescription>Manage bus fleet and assignments</CardDescription>
+                    </div>
+                    <Dialog open={openBusDialog} onOpenChange={setOpenBusDialog}>
+                      <DialogTrigger asChild>
+                        <Button className="glass-strong">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Bus
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="glass-strong border max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Add New Bus</DialogTitle>
+                          <DialogDescription>Register a new bus in the system</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleAddBus} className="space-y-4">
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="busNumber">Bus Number</Label>
+                              <Input
+                                id="busNumber"
+                                value={busForm.busNumber}
+                                onChange={(e) => setBusForm({ ...busForm, busNumber: e.target.value })}
+                                placeholder="KA-01-AB-1234"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="busType">Bus Type</Label>
+                              <Select
+                                value={busForm.busType}
+                                onValueChange={(value) => setBusForm({ ...busForm, busType: value })}
+                              >
+                                <SelectTrigger className="glass">
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent className="glass-strong border">
+                                  <SelectItem value="AC">AC</SelectItem>
+                                  <SelectItem value="Non-AC">Non-AC</SelectItem>
+                                  <SelectItem value="Volvo">Volvo</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="capacity">Capacity</Label>
+                              <Input
+                                id="capacity"
+                                type="number"
+                                value={busForm.capacity}
+                                onChange={(e) => setBusForm({ ...busForm, capacity: e.target.value })}
+                                placeholder="40"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="totalSeats">Total Seats</Label>
+                              <Input
+                                id="totalSeats"
+                                type="number"
+                                value={busForm.totalSeats}
+                                onChange={(e) => setBusForm({ ...busForm, totalSeats: e.target.value })}
+                                placeholder="40"
+                                required
+                                className="glass"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="routeId">Assign Route</Label>
+                            <Select
+                              value={busForm.routeId}
+                              onValueChange={(value) => setBusForm({ ...busForm, routeId: value })}
+                            >
+                              <SelectTrigger className="glass">
+                                <SelectValue placeholder="Select route" />
+                              </SelectTrigger>
+                              <SelectContent className="glass-strong border">
+                                {routes?.map((route) => (
+                                  <SelectItem key={route._id} value={route._id}>
+                                    {route.routeName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="driverId">Driver (Optional)</Label>
+                              <Select
+                                value={busForm.driverId}
+                                onValueChange={(value) => setBusForm({ ...busForm, driverId: value })}
+                              >
+                                <SelectTrigger className="glass">
+                                  <SelectValue placeholder="Select driver" />
+                                </SelectTrigger>
+                                <SelectContent className="glass-strong border">
+                                  <SelectItem value="">None</SelectItem>
+                                  {staff?.filter(s => s.role === "driver").map((driver) => (
+                                    <SelectItem key={driver._id} value={driver._id}>
+                                      {driver.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="conductorId">Conductor (Optional)</Label>
+                              <Select
+                                value={busForm.conductorId}
+                                onValueChange={(value) => setBusForm({ ...busForm, conductorId: value })}
+                              >
+                                <SelectTrigger className="glass">
+                                  <SelectValue placeholder="Select conductor" />
+                                </SelectTrigger>
+                                <SelectContent className="glass-strong border">
+                                  <SelectItem value="">None</SelectItem>
+                                  {staff?.filter(s => s.role === "conductor").map((conductor) => (
+                                    <SelectItem key={conductor._id} value={conductor._id}>
+                                      {conductor.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <Button type="submit" className="w-full glass-strong">
+                            Add Bus
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {buses && buses.length > 0 ? (
