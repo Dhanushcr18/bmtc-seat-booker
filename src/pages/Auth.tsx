@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/input-otp";
 
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowRight, Loader2, Mail, UserX } from "lucide-react";
+import { ArrowRight, Loader2, Mail, UserX, Shield } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -26,7 +26,7 @@ interface AuthProps {
 function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const { isLoading: authLoading, isAuthenticated, signIn } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<"signIn" | { email: string }>("signIn");
+  const [step, setStep] = useState<"signIn" | "adminLogin" | { email: string }>("signIn");
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +37,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       navigate(redirect);
     }
   }, [authLoading, isAuthenticated, navigate, redirectAfterAuth]);
+
   const handleEmailSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
@@ -166,17 +167,86 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       </div>
                     </div>
                     
+                    <div className="space-y-2 mt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={handleGuestLogin}
+                        disabled={isLoading}
+                      >
+                        <UserX className="mr-2 h-4 w-4" />
+                        Continue as Guest
+                      </Button>
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setStep("adminLogin")}
+                        disabled={isLoading}
+                      >
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin Login
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </form>
+            </>
+          ) : step === "adminLogin" ? (
+            <>
+              <CardHeader className="text-center">
+                <div className="flex justify-center">
+                  <div className="rounded-full bg-primary/10 p-3 mb-4">
+                    <Shield className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl">Admin Login</CardTitle>
+                <CardDescription>
+                  Enter your admin credentials
+                </CardDescription>
+              </CardHeader>
+              <form onSubmit={handleEmailSubmit}>
+                <CardContent>
+                  <div className="relative flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        name="email"
+                        placeholder="admin@bmtc.com"
+                        type="email"
+                        className="pl-9"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
                     <Button
-                      type="button"
+                      type="submit"
                       variant="outline"
-                      className="w-full mt-4"
-                      onClick={handleGuestLogin}
+                      size="icon"
                       disabled={isLoading}
                     >
-                      <UserX className="mr-2 h-4 w-4" />
-                      Continue as Guest
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ArrowRight className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
+                  {error && (
+                    <p className="mt-2 text-sm text-red-500">{error}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground text-center mt-4">
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-xs"
+                      onClick={() => setStep("signIn")}
+                      type="button"
+                    >
+                      Back to regular login
+                    </Button>
+                  </p>
                 </CardContent>
               </form>
             </>
